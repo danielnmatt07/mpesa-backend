@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const fs = require("fs");
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 require("dotenv").config();
@@ -9,8 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Firebase Admin
-const serviceAccount = require("./serviceAccountKey.json");
+// Initialize Firebase Admin (handles both Render and local environment)
+const secretPath = fs.existsSync("/etc/secrets/serviceAccountKey.json")
+  ? "/etc/secrets/serviceAccountKey.json"
+  : "./serviceAccountKey.json";
+
+const serviceAccount = require(secretPath);
+
 initializeApp({
   credential: cert(serviceAccount)
 });
