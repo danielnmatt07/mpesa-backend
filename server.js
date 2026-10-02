@@ -80,19 +80,19 @@ app.post("/api/initiate-stk", async (req, res) => {
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
-    await db.collection("bookings").doc(bookingId).update({
+    await db.collection("bookings").doc(bookingId).set({
       paymentStatus: "awaiting_payment",
       paymentPhone: formattedPhone,
       checkoutRequestId: response.data.CheckoutRequestID,
       merchantRequestId: response.data.MerchantRequestID,
       requestedAmount: Math.round(amount),
       requestedAt: FieldValue.serverTimestamp()
-    });
+    }, { merge: true });
 
     res.json({ success: true, checkoutRequestId: response.data.CheckoutRequestID });
   } catch (error) {
     console.error("STK Push Error:", error.response?.data || error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.response?.data || error.message });
   }
 });
 
