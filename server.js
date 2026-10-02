@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const admin = require("firebase-admin");
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 require("dotenv").config();
 
 const app = express();
@@ -10,11 +11,11 @@ app.use(express.json());
 
 // Initialize Firebase Admin
 const serviceAccount = require("./serviceAccountKey.json");
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+initializeApp({
+  credential: cert(serviceAccount)
 });
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // 1. Initiate STK Push Endpoint
 app.post("/api/initiate-stk", async (req, res) => {
@@ -79,7 +80,7 @@ app.post("/api/initiate-stk", async (req, res) => {
       checkoutRequestId: response.data.CheckoutRequestID,
       merchantRequestId: response.data.MerchantRequestID,
       requestedAmount: Math.round(amount),
-      requestedAt: admin.firestore.FieldValue.serverTimestamp()
+      requestedAt: FieldValue.serverTimestamp()
     });
 
     res.json({ success: true, checkoutRequestId: response.data.CheckoutRequestID });
@@ -128,7 +129,7 @@ app.post("/api/mpesa-callback", async (req, res) => {
         paymentStatus: newAmountDue === 0 ? "paid" : "partially_paid",
         amountPaid: newTotalPaid,
         amountDue: newAmountDue,
-        paymentHistory: admin.firestore.FieldValue.arrayUnion(paymentLog)
+        paymentHistory: FieldValue.arrayUnion(paymentLog)
       });
     } else {
       await bookingDoc.ref.update({ paymentStatus: "failed" });
